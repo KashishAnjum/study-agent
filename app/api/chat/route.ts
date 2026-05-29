@@ -26,6 +26,8 @@ export async function POST(req: Request) {
   const data = await response.json();
 
   return NextResponse.json({
-    answer: data.choices?.[0]?.message?.content || "No response",
+    success: response.ok,
+    status: response.status,
+    data,
   });
 }
