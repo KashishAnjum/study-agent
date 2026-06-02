@@ -5,8 +5,11 @@ import { useState } from 'react'
 export default function Home() {
   const [message, setMessage] = useState('')
   const [response, setResponse] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSend = async () => {
+    setLoading(true)
+
     const conceptRes = await fetch('/api/detect-concept', {
       method: 'POST',
       headers: {
@@ -34,6 +37,7 @@ export default function Home() {
     const chatData = await chatRes.json()
 
     setResponse(chatData.answer)
+    setLoading(false)
   }
 
   const handleSave = async () => {
@@ -55,35 +59,52 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-black text-white p-10">
-      <h1 className="text-3xl font-bold mb-6">
-        Study Agent
+      <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text">
+        Study Agent 🚀
       </h1>
+
+      <p className="text-gray-400 mb-8">
+        Your AI Learning Companion
+      </p>
+
+      <div className="flex items-center gap-2 mb-6">
+        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+        <span className="text-green-400">
+          Online
+        </span>
+      </div>
 
       <div className="flex gap-4">
         <input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Ask something..."
-          className="flex-1 p-3 rounded bg-gray-800"
+          placeholder="Ask anything..."
+          className="flex-1 p-3 rounded-xl bg-gray-800 border border-gray-700"
         />
 
         <button
           onClick={handleSend}
-          className="bg-purple-600 px-6 py-3 rounded"
+          className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl"
         >
           Send
         </button>
       </div>
 
+      {loading && (
+        <div className="mt-6 text-purple-400">
+          AI is thinking...
+        </div>
+      )}
+
       {response && (
         <div>
-          <div className="mt-6 p-4 bg-gray-800 rounded whitespace-pre-wrap">
+          <div className="mt-6 p-5 bg-gray-800 rounded-2xl whitespace-pre-wrap border border-gray-700 shadow-lg">
             {response}
           </div>
 
           <button
             onClick={handleSave}
-            className="mt-4 bg-green-600 px-4 py-2 rounded"
+            className="mt-4 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl"
           >
             Save Progress
           </button>
@@ -91,4 +112,4 @@ export default function Home() {
       )}
     </main>
   )
-} 
+}
