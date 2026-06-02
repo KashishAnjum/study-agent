@@ -26,12 +26,17 @@ export async function POST(req: Request) {
 
     const data = await response.json();
 
+    console.log("OPENROUTER RESPONSE:");
+    console.log(JSON.stringify(data, null, 2));
+
     return NextResponse.json({
       answer:
         data?.choices?.[0]?.message?.content ||
         JSON.stringify(data),
     });
   } catch (error) {
+    console.error(error);
+
     return NextResponse.json({
       error: String(error),
     });

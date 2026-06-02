@@ -4,39 +4,78 @@ import { useState } from 'react'
 
 export default function Home() {
   const [message, setMessage] = useState('')
-  const [response, setResponse] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const [messages, setMessages] = useState<
+    {
+      role: string
+      content: string
+    }[]
+  >([])
+
   const handleSend = async () => {
+    if (!message.trim()) return
+
+    const userMessage = message
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'user',
+        content: userMessage,
+      },
+    ])
+
+    setMessage('')
     setLoading(true)
 
-    const conceptRes = await fetch('/api/detect-concept', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userMessage: message,
-      }),
-    })
+    try {
+      const conceptRes = await fetch('/api/detect-concept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userMessage,
+        }),
+      })
 
-    const conceptData = await conceptRes.json()
+      const conceptData = await conceptRes.json()
 
-    const chatRes = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userMessage: message,
-        subject: conceptData.subject,
-        concept: conceptData.concept,
-      }),
-    })
+      const chatRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userMessage,
+          subject: conceptData.subject,
+          concept: conceptData.concept,
+        }),
+      })
 
-    const chatData = await chatRes.json()
+      const chatData = await chatRes.json()
 
-    setResponse(chatData.answer)
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            chatData.answer ||
+            'No response received',
+        },
+      ])
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            'Something went wrong. Please try again.',
+        },
+      ])
+    }
+
     setLoading(false)
   }
 
@@ -58,7 +97,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white p-10">
+    <main className="min-h-screen bg-black text-white p-8">
       <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text">
         Study Agent 🚀
       </h1>
@@ -69,6 +108,7 @@ export default function Home() {
 
       <div className="flex items-center gap-2 mb-6">
         <div className="w-3 h-3 rounded-full bg-green-500"></div>
+
         <span className="text-green-400">
           Online
         </span>
@@ -77,9 +117,11 @@ export default function Home() {
       <div className="flex gap-4">
         <input
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) =>
+            setMessage(e.target.value)
+          }
           placeholder="Ask anything..."
-          className="flex-1 p-3 rounded-xl bg-gray-800 border border-gray-700"
+          className="flex-1 p-4 rounded-xl bg-gray-800 border border-gray-700"
         />
 
         <button
@@ -91,24 +133,39 @@ export default function Home() {
       </div>
 
       {loading && (
-        <div className="mt-6 text-purple-400">
+        <div className="mt-4 text-purple-400">
           AI is thinking...
         </div>
       )}
 
-      {response && (
-        <div>
-          <div className="mt-6 p-5 bg-gray-800 rounded-2xl whitespace-pre-wrap border border-gray-700 shadow-lg">
-            {response}
-          </div>
-
-          <button
-            onClick={handleSave}
-            className="mt-4 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl"
+      <div className="mt-8 space-y-4">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`max-w-4xl p-4 rounded-2xl whitespace-pre-wrap ${
+              msg.role === 'user'
+                ? 'bg-purple-600 ml-auto'
+                : 'bg-gray-800 border border-gray-700'
+            }`}
           >
-            Save Progress
-          </button>
-        </div>
+            <div className="font-bold mb-2">
+              {msg.role === 'user'
+                ? '🧑 You'
+                : '🤖 AI'}
+            </div>
+
+            {msg.content}
+          </div>
+        ))}
+      </div>
+
+      {messages.length > 0 && (
+        <button
+          onClick={handleSave}
+          className="mt-6 bg-green-600 hover:bg-green-700 px-5 py-3 rounded-xl"
+        >
+          Save Progress
+        </button>
       )}
     </main>
   )
